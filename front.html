@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Search Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4285f4 0%, #1976d2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.025em;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .search-section {
+            padding: 40px;
+            background: #f8f9ff;
+            border-bottom: 1px solid #e3e8ff;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .search-input, .path-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .search-input:focus, .path-input:focus {
+            outline: none;
+            border-color: #4285f4;
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #4285f4 0%, #1976d2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 120px;
+            align-self: end;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(66, 133, 244, 0.3);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #4285f4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            padding: 0;
+        }
+
+        .results-header {
+            padding: 30px 40px 20px;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .results-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+
+        .results-meta {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .results-list {
+            background: white;
+        }
+
+        .result-item {
+            padding: 25px 40px;
+            border-bottom: 1px solid #f3f4f6;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .result-item:hover {
+            background: #f8f9ff;
+            border-left: 4px solid #4285f4;
+            padding-left: 36px;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .result-path {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .result-folder {
+            font-size: 0.85rem;
+            color: #9ca3af;
+            margin-bottom: 10px;
+        }
+
+        .result-score {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 20px;
+            margin: 20px 40px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 40px;
+            color: #6b7280;
+        }
+
+        .no-results-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .search-form {
+                flex-direction: column;
+            }
+            
+            .search-section, .results-header {
+                padding: 20px;
+            }
+            
+            .result-item {
+                padding: 20px;
+            }
+            
+            .result-item:hover {
+                padding-left: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Code Search Engine</h1>
+            <p>Find functions in your codebase with intelligent matching</p>
+        </div>
+
+        <div class="search-section">
+            <form class="search-form" id="searchForm">
+                <div class="input-group">
+                    <label class="input-label" for="query">Search Query</label>
+                    <input 
+                        type="text" 
+                        id="query" 
+                        name="query" 
+                        class="search-input"
+                        placeholder="Enter function or variable name..."
+                        required
+                    >
+                </div>
+                <div class="input-group">
+                    <label class="input-label" for="codebase_path">Codebase Path</label>
+                    <input 
+                        type="text" 
+                        id="codebase_path" 
+                        name="codebase_path" 
+                        class="path-input"
+                        placeholder="Path to your codebase"
+                        value="codebase"
+                    >
+                </div>
+                <button type="submit" class="search-btn" id="searchBtn">
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <div id="loadingSection" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Searching through your codebase...</p>
+        </div>
+
+        <div id="resultsSection" class="results-section" style="display: none;">
+            <div class="results-header">
+                <h2 class="results-title">Search Results</h2>
+                <p class="results-meta" id="resultsMeta"></p>
+            </div>
+            <div class="results-list" id="resultsList"></div>
+        </div>
+
+        <div id="errorSection" style="display: none;">
+            <div class="error" id="errorMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const errorSection = document.getElementById('errorSection');
+        const resultsList = document.getElementById('resultsList');
+        const resultsMeta = document.getElementById('resultsMeta');
+        const errorMessage = document.getElementById('errorMessage');
+        const searchBtn = document.getElementById('searchBtn');
+
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const query = document.getElementById('query').value.trim();
+            const codebasePath = document.getElementById('codebase_path').value.trim() || 'codebase';
+            
+            if (!query) {
+                showError('Please enter a search query');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        codebase_path: codebasePath
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Search failed');
+                }
+
+                showResults(data);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        function showLoading() {
+            hideAllSections();
+            loadingSection.style.display = 'block';
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'Searching...';
+        }
+
+        function showResults(data) {
+            hideAllSections();
+            
+            if (data.results.length === 0) {
+                showNoResults(data.query);
+                return;
+            }
+
+            resultsMeta.textContent = `Found ${data.results.length} matches out of ${data.total_identifiers} total identifiers`;
+            
+            resultsList.innerHTML = '';
+            
+            data.results.forEach((result, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                resultItem.innerHTML = `
+                    <div class="result-name">${escapeHtml(result.name)}</div>
+                    <div class="result-path">${escapeHtml(result.full_path)}</div>
+                    <div class="result-folder">Folder: ${escapeHtml(result.folder)}</div>
+                    <div class="result-score">Score: ${result.score}</div>
+                `;
+                
+                resultsList.appendChild(resultItem);
+            });
+            
+            resultsSection.style.display = 'block';
+            searchBtn.disabled = false;
+            searchBtn.textContent = 'Search';
+        }
+
+        function showNoResults(query) {
+            hideAllSections();
+            resultsList.innerHTML = `
+                <div class="no-results">
+                    <div class="no-results-icon">🔍</div>
+                    <h3>No results found</h3>
+                    <p>No matches found for "${escapeHtml(query)}". Try different keywords or check your codebase path.</p>
+                </div>
+            `;
+            resultsSection.style.display = 'block';
+            searchBtn.disabled = false;
+            searchBtn.textContent = 'Search';
+        }
+
+        function showError(message) {
+            hideAllSections();
+            errorMessage.textContent = message;
+            errorSection.style.display = 'block';
+            searchBtn.disabled = false;
+            searchBtn.textContent = 'Search';
+        }
+
+        function hideAllSections() {
+            loadingSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+            errorSection.style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Auto-focus on search input
+        document.getElementById('query').focus();
+    </script>
+</body>
+</html>
